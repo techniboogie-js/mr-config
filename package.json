@@ -1,0 +1,30 @@
+{
+  "name": "mr-config",
+  "version": "1.0.0",
+  "description": "Environmental config",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/techniboogie/mr-config.git"
+  },
+  "keywords": [
+    "config"
+  ],
+  "author": "NiteHogg",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/techniboogie/mr-config/issues"
+  },
+  "homepage": "https://github.com/techniboogie/mr-config#readme",
+  "dependencies": {
+    "synchronize": "~0.9.14",
+    "lodash": "~3.10.1",
+    "jsonfile": "~2.2.1",
+    "js-yaml": "~3.4.0",
+    "xml-json": "~2.0.2",
+    "properties": "~1.2.1"
+  }
+}

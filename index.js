@@ -1,51 +1,78 @@
-var fs = require('fs');
-var path = require('path');
 
-var sync = require('synchronize');
+/* TODO
+ add inheritance
+
+
+ doc
+ optoins: watch, parser
+ reload(), save(), reset()
+ hidden props: $config $timestamp
+*/
+var fs = require('fs');
+
 var _ = require('lodash');
 
-var json = require('jsonfile');
-var yaml = require('js-yaml');
-var xml = require('xml-json');
-var properties = require('properties');
+var configParser = require('./configParser');
+var Config = require('./Config');
+
+mrConfig.reset = function() {
+  setConfig(undefined);
+};
 
 module.exports = mrConfig;
 
 function mrConfig(options) {
-  var configFile = process.env.THE_CONFIG;
 
-  var doc = parseFile(configFile);
-  doc.$config = configFile;
+  // Load config meta data if it isn't cached
+  if (!getConfig()) {
+    var configFiles = process.env.MR_CONFIGS_FILES;
 
-  if (options && options.watchFile) {
+    if (!configFiles) {
+      throw new Error('Environment variable "MR_CONFIGS_FILES" is not set.');
+    }
 
-    fs.watchFile(configFile, function() {
-      var updatedDoc = parseFile(configFile);
-      _.assign(doc, updatedDoc);
+    var files = configFiles.split(',');
+    var metaData = [];
+
+    _.forEach(files, function(file) {
+      file = file.trim();
+
+      var metaDataFile = {
+        filename: file,
+        loneConfig: undefined,
+        watcher: undefined
+      };
+
+      if (options && options.watch === true) {
+        metaDataFile.watcher = createWatcher(file);
+      }
+
+      metaData.push(metaDataFile);
     });
+
+    if (options && options.parser) {
+      configParser.parser = options.parser;
+    }
+
+    var config = new Config(metaData);
+    config.reload();
+
+    setConfig(config);
   }
-  return doc;
+  return getConfig();
 }
 
-function parseFile(filePath) {
-  var doc = null;
-  var fileType = path.extname(filePath).subsr(1).toLowerCase();
+function setConfig(config) {
+  mrConfig.config = config;
+}
 
-  if (fileType == 'json') {
-    doc = sync.await(json.readFile(filePath, sync.defer()));
-  }
-  else if (fileType == 'yaml') {
-    doc = yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
-  }
-  else if (fileType == 'xml') {
-    doc = xml-json(filePath);
-  }
-  else if (fileType == 'properties') {
-    doc = sync.await(properties.parse(filePath, { path: true }, sync.defer()));
-  }
-  else {
-    throw new Error('Unsupported file type: ' + fileType);
-  }
+function getConfig() {
+  return mrConfig.config;
+}
 
-  return doc;
+function createWatcher(filename) {
+
+  return fs.watch(filename, function() {
+    getConfig().reload();
+  });
 }

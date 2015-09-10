@@ -1,0 +1,11 @@
+<xml>
+  <property>value</property>
+  <object>
+    <property>value</property>
+    <elementList>
+      <element>1</element>
+      <element>2</element>
+      <element>3</element>
+    </elementList>
+  </object>
+</xml>

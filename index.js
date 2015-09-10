@@ -73,6 +73,7 @@ function getConfig() {
 function createWatcher(filename) {
 
   return fs.watch(filename, function() {
+    console.log('fire! ', filename);
     getConfig().reload();
   });
 }

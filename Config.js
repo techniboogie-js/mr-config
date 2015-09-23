@@ -31,6 +31,10 @@ Config.prototype.reload = function() {
   this.$timestamp = Date.now();
 };
 
-Config.prototype.save = function() {
-// save from right to left
+Config.prototype.watch = function() {
+
+};
+
+Config.prototype.unwatch = function() {
+
 };

@@ -5,8 +5,7 @@ exports.json = {
   object: {
     property: "value",
     array: [ 1, 2, 3 ]
-  },
-  $configs: configPaths.json.split(',')
+  }
 };
 
 exports.yaml = {
@@ -14,8 +13,7 @@ exports.yaml = {
   object: {
     property: "value",
     array: [ 1, 2, 3 ]
-  },
-  $configs: configPaths.yaml.split(',')
+  }
 };
 
 exports.xml = {
@@ -33,13 +31,11 @@ exports.xml = {
       ],
       property: [ "value" ]
     }
-  ],
-  $configs: configPaths.xml.split(',')
+  ]
 };
 
 exports.properties = {
   property1: "value1",
   property2: "value2",
-  array: "1, 2, 3",
-  $configs: configPaths.properties.split(',')
+  array: "1, 2, 3"
 };

@@ -1,1 +1,1 @@
-{"$configs":["./test/fixtures/config.json"],"property":"value","object":{"property":"value","array":[1,2,3]}}
+{"property":"value","object":{"property":"value","array":[1,2,3]}}

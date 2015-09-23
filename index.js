@@ -1,11 +1,9 @@
 
 /* TODO
- add inheritance
-
 
  doc
  optoins: watch, parser
- reload(), save(), reset()
+ reload(), reset()
  hidden props: $config $timestamp
 */
 var fs = require('fs');
@@ -17,6 +15,7 @@ var Config = require('./Config');
 
 mrConfig.reset = function() {
   setConfig(undefined);
+  configParser.parser = null;
 };
 
 module.exports = mrConfig;
@@ -25,6 +24,11 @@ function mrConfig(options) {
 
   // Load config meta data if it isn't cached
   if (!getConfig()) {
+
+    if (options) {
+      configParser.parser = options.parser;
+    }
+
     var configFiles = process.env.MR_CONFIGS_FILES;
 
     if (!configFiles) {
@@ -50,10 +54,6 @@ function mrConfig(options) {
       metaData.push(metaDataFile);
     });
 
-    if (options && options.parser) {
-      configParser.parser = options.parser;
-    }
-
     var config = new Config(metaData);
     config.reload();
 
@@ -63,6 +63,15 @@ function mrConfig(options) {
 }
 
 function setConfig(config) {
+  // Just a safety net until a queue is implemented
+  if (mrConfig.config) {
+    _.forEach(mrConfig.config.$metaData, function(file) {
+
+      if (file.watcher) {
+        file.watcher.close();
+      }
+    });
+  }
   mrConfig.config = config;
 }
 
@@ -73,7 +82,6 @@ function getConfig() {
 function createWatcher(filename) {
 
   return fs.watch(filename, function() {
-    console.log('fire! ', filename);
     getConfig().reload();
   });
 }

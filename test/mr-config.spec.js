@@ -17,7 +17,7 @@ describe('Parse config files', function() {
     process.env.MR_CONFIGS_FILES = configs.json;
 
     var conf = subject();
-    removeHiddenProps(conf);
+    conf = removeUnwantedProps(conf);
 
     assert.deepEqual(conf, parsed.json);
   });
@@ -26,7 +26,7 @@ describe('Parse config files', function() {
     process.env.MR_CONFIGS_FILES = configs.yaml;
 
     var conf = subject();
-    removeHiddenProps(conf);
+    conf = removeUnwantedProps(conf);
 
     assert.deepEqual(conf, parsed.yaml);
   });
@@ -35,7 +35,7 @@ describe('Parse config files', function() {
     process.env.MR_CONFIGS_FILES = configs.xml;
 
     var conf = subject();
-    removeHiddenProps(conf);
+    conf = removeUnwantedProps(conf);
 
     assert.deepEqual(conf, parsed.xml);
   });
@@ -44,9 +44,20 @@ describe('Parse config files', function() {
     process.env.MR_CONFIGS_FILES = configs.properties;
 
     var conf = subject();
-    removeHiddenProps(conf);
+    conf = removeUnwantedProps(conf);
 
     assert.deepEqual(conf, parsed.properties);
+  });
+
+  it('with custom parser', function() {
+    process.env.MR_CONFIGS_FILES = configs.json;
+
+    var conf = subject({ parser: function(filename) {
+      return { parsed: filename };
+    }});
+    conf = removeUnwantedProps(conf);
+
+    assert.equal(conf.parsed, process.env.MR_CONFIGS_FILES);
   });
 });
 
@@ -54,9 +65,14 @@ describe('Load config', function() {
   var config  = null;
 
   before(function() {
-    process.env.MR_CONFIGS_FILES = configs.json;
+    process.env.MR_CONFIGS_FILES = configs.json + ', ' + configs.json2;
     subject.reset();
     config = subject();
+  });
+
+  it('Using multiple configs', function() {
+    assert(config.property);
+    assert(config.numberTwo);
   });
 
   it('using cached copy', function() {
@@ -71,19 +87,24 @@ describe('Load config', function() {
 });
 
 describe('Update cached config', function() {
-  var config  = null;
   var orig = null;
+  var configClone = null;
 
   before(function() {
     process.env.MR_CONFIGS_FILES = configs.json;
     subject.reset();
-    config = subject({ watch: true });
 
-    orig = _.clone(config);
+    orig = subject();
+    configClone = _.clone(orig);
+  });
+
+  beforeEach(function() {
+    subject.reset();
   });
 
   it('when file changes', function(done) {
-    var configClone = _.clone(config);
+    config = subject({ watch: true });
+
     configClone.property = 'test';
 
     var watcher = fs.watch(process.env.MR_CONFIGS_FILES, function() {
@@ -92,44 +113,29 @@ describe('Update cached config', function() {
       assert.equal(config.property, 'test');
       done();
     });
-    fs.writeFileSync(process.env.MR_CONFIGS_FILES, JSON.stringify(configClone));
+    writeFile(process.env.MR_CONFIGS_FILES, configClone);
   });
 
   it('using reload():', function() {
+    config = subject();
+
+    configClone.property = 'test2!';
+    writeFile(process.env.MR_CONFIGS_FILES, configClone);
+
     config.reload();
+
+    assert.equal(config.property, 'test2!');
   });
 
   after(function() {
-    delete orig.$config;
-    delete orig.$timestamp;
-    delete orig.$metaData;
-
-    fs.writeFileSync(process.env.MR_CONFIGS_FILES, JSON.stringify(orig));
+    writeFile(process.env.MR_CONFIGS_FILES, orig);
   });
 });
 
-describe('Save config', function() {
+function removeUnwantedProps(config) {
+  return _.omit(config, ['$timestamp', '$metaData', '$configs', 'reload']);
+}
 
-  before(function() {
-    process.env.MR_CONFIGS_FILES = configs.json;
-    subject.reset();
-  });
-
-  it('to file', function() {
-    var config = subject();
-    config.property = 'save';
-
-    config.save();
-
-    subject.reset();
-    var newConfig = subject();
-
-    assert.deepEqual(config, newConfig);
-  });
-});
-
-function removeHiddenProps(config) {
-  delete config.$timestamp;
-  delete config.$metaData;
-  // delete config.$configs;
+function writeFile(filename, config) {
+  fs.writeFileSync(filename, JSON.stringify(removeUnwantedProps(config)));
 }

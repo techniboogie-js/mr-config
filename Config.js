@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 var _ = require('lodash');
 
 var parser = require('./configParser');
@@ -32,9 +34,22 @@ Config.prototype.reload = function() {
 };
 
 Config.prototype.watch = function() {
+  var conf = this;
 
+  _.forEach(conf.$metaData, function(md) {
+
+    md.watcher = fs.watch(md.filename, function() {
+      conf.reload();
+    });
+  });
 };
 
 Config.prototype.unwatch = function() {
 
+  _.forEach(this.$metaData, function(md) {
+
+    if (md.watcher) {
+      md.watcher.close();
+    }
+  });
 };

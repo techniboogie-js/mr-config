@@ -1,5 +1,6 @@
 var assert = require('assert');
 var fs = require('fs');
+var path = require('path');
 
 var _ = require('lodash');
 
@@ -16,16 +17,25 @@ describe('Parse config files', function() {
   it('with type JSON', function() {
     process.env.MR_CONFIGS_FILES = configs.json;
 
-    var conf = subject();
+    var conf = subject(null, true);
     conf = removeUnwantedProps(conf);
 
     assert.deepEqual(conf, parsed.json);
   });
 
+  it('with type JS', function() {
+    process.env.MR_CONFIGS_FILES = configs.js;
+
+    var conf = subject(null, true);
+    conf = removeUnwantedProps(conf);
+
+    assert.deepEqual(conf, parsed.js);
+  });
+
   it('with type YAML', function() {
     process.env.MR_CONFIGS_FILES = configs.yaml;
 
-    var conf = subject();
+    var conf = subject(null, true);
     conf = removeUnwantedProps(conf);
 
     assert.deepEqual(conf, parsed.yaml);
@@ -34,7 +44,7 @@ describe('Parse config files', function() {
   it('with type XML', function() {
     process.env.MR_CONFIGS_FILES = configs.xml;
 
-    var conf = subject();
+    var conf = subject(null, true);
     conf = removeUnwantedProps(conf);
 
     assert.deepEqual(conf, parsed.xml);
@@ -43,7 +53,7 @@ describe('Parse config files', function() {
   it('with type properties', function() {
     process.env.MR_CONFIGS_FILES = configs.properties;
 
-    var conf = subject();
+    var conf = subject(null, true);
     conf = removeUnwantedProps(conf);
 
     assert.deepEqual(conf, parsed.properties);
@@ -54,7 +64,7 @@ describe('Parse config files', function() {
 
     var conf = subject({ parser: function(filename) {
       return { parsed: filename };
-    }});
+    }}, true);
     conf = removeUnwantedProps(conf);
 
     assert.equal(conf.parsed, process.env.MR_CONFIGS_FILES);
@@ -67,7 +77,7 @@ describe('Load config', function() {
   before(function() {
     process.env.MR_CONFIGS_FILES = configs.json + ', ' + configs.json2;
     subject.reset();
-    config = subject();
+    config = subject(null, true);
   });
 
   it('Using multiple configs', function() {
@@ -76,7 +86,7 @@ describe('Load config', function() {
   });
 
   it('using cached copy', function() {
-    var configCached = subject();
+    var configCached = subject(null, true);
     assert.equal(config.$timestamp, configCached.$timestamp);
   });
 
@@ -94,7 +104,7 @@ describe('Update cached config', function() {
     process.env.MR_CONFIGS_FILES = configs.json;
     subject.reset();
 
-    orig = subject();
+    orig = subject(null, true);
     configClone = _.clone(orig);
   });
 
@@ -103,7 +113,8 @@ describe('Update cached config', function() {
   });
 
   it('when file changes', function(done) {
-    config = subject({ watch: true });
+    config = subject(null, true);
+    config.watch();
 
     configClone.property = 'test';
 
@@ -117,7 +128,7 @@ describe('Update cached config', function() {
   });
 
   it('using reload():', function() {
-    config = subject();
+    config = subject(null, true);
 
     configClone.property = 'test2!';
     writeFile(process.env.MR_CONFIGS_FILES, configClone);
@@ -132,8 +143,49 @@ describe('Update cached config', function() {
   });
 });
 
+describe('When missing env var', function() {
+  var jsonPath = path.join(__dirname, 'fixtures');
+
+
+  beforeEach(function() {
+    subject.reset();
+    process.env.MR_CONFIGS_FILES = '';
+  });
+
+  it('try to load config.json', function(done) {
+    fs.stat(path.join(jsonPath, 'config.json'), function(err, stats) {
+
+      if (err) {
+        console.warn('./config.json not found');
+      }
+      else {
+        process.chdir(jsonPath);
+
+        var config = require('..')();
+        assert.deepEqual(removeUnwantedProps(config), parsed.json);
+      }
+      done();
+    });
+  });
+
+  it('try to load default.js', function() {
+    console.info('default.js needs to be tested manually');
+  });
+
+  after(function() {
+    process.chdir('../..');
+  });
+});
+
 function removeUnwantedProps(config) {
-  return _.omit(config, ['$timestamp', '$metaData', '$configs', 'reload']);
+  return _.omit(config, [
+    '$timestamp',
+    '$metaData',
+    '$configs',
+    'reload',
+    'watch',
+    'unwatch'
+  ]);
 }
 
 function writeFile(filename, config) {

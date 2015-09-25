@@ -23,6 +23,11 @@ exports.parseFile = function(filePath) {
     else if (fileType == 'json') {
       doc = json.readFileSync(filePath);
     }
+    else if (fileType == 'js') {
+      // Strip off .js
+      var moduleName = filePath.match(/(.*)\.js/)[1];
+      doc = require(moduleName);
+    }
     else if (fileType == 'yaml') {
       doc = yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
     }

@@ -8,6 +8,14 @@ exports.json = {
   }
 };
 
+exports.js = {
+  property: 'value',
+  object: {
+    property: 'value',
+    array: [ 1, 2, 3, 4 ]
+  }
+};
+
 exports.yaml = {
   property: "value",
   object: {

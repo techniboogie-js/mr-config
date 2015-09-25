@@ -5,8 +5,11 @@
  optoins: watch, parser
  reload(), reset()
  hidden props: $config $timestamp
+
+ js files are expected to be node modules
 */
 var fs = require('fs');
+var path = require('path');
 
 var _ = require('lodash');
 
@@ -20,8 +23,7 @@ mrConfig.reset = function() {
 
 module.exports = mrConfig;
 
-function mrConfig(options) {
-
+function mrConfig(options, noLog) {
   // Load config meta data if it isn't cached
   if (!getConfig()) {
 
@@ -31,8 +33,33 @@ function mrConfig(options) {
 
     var configFiles = process.env.MR_CONFIGS_FILES;
 
-    if (!configFiles) {
-      throw new Error('Environment variable "MR_CONFIGS_FILES" is not set.');
+    if (configFiles) {
+
+      if (noLog !== true) {
+        console.info('MR_CONFIGS_FILES: ' + configFiles);
+      }
+    }
+    else {
+      console.warn('Environment variable "MR_CONFIGS_FILES" is not set. Checking for config.json or default.js in current directory.');
+
+      // Check for config.json or default.js
+      var configJson = path.join(process.cwd(), 'config.json');
+      var defaultJs =  path.join(process.cwd(), 'default.js');
+
+      try {
+        fs.statSync(configJson);
+        configFiles = configJson;
+      }
+      catch (e) {
+
+        try {
+          fs.statSync(defaultJs);
+          configFiles = defaultJs;
+        }
+        catch (f) {
+          throw new Error('No configuration files found.');
+        }
+      }
     }
 
     var files = configFiles.split(',');
@@ -46,11 +73,6 @@ function mrConfig(options) {
         loneConfig: undefined,
         watcher: undefined
       };
-
-      if (options && options.watch === true) {
-        metaDataFile.watcher = createWatcher(file);
-      }
-
       metaData.push(metaDataFile);
     });
 
@@ -63,25 +85,13 @@ function mrConfig(options) {
 }
 
 function setConfig(config) {
-  // Just a safety net until a queue is implemented
+  // Just a safety net
   if (mrConfig.config) {
-    _.forEach(mrConfig.config.$metaData, function(file) {
-
-      if (file.watcher) {
-        file.watcher.close();
-      }
-    });
+    mrConfig.config.unwatch();
   }
   mrConfig.config = config;
 }
 
 function getConfig() {
   return mrConfig.config;
-}
-
-function createWatcher(filename) {
-
-  return fs.watch(filename, function() {
-    getConfig().reload();
-  });
 }

@@ -10,15 +10,12 @@ var configs = require('./fixtures/the-configs');
 
 describe('Parse config files', function() {
 
-  beforeEach(function() {
-    subject.reset();
-  });
-
   it('with type JSON', function() {
     process.env.MR_CONFIGS_FILES = configs.json;
 
-    var conf = subject(null, true);
-    conf = removeUnwantedProps(conf);
+    subject.reload();
+
+    var conf = removeUnwantedProps(subject);
 
     assert.deepEqual(conf, parsed.json);
   });
@@ -26,73 +23,72 @@ describe('Parse config files', function() {
   it('with type JS', function() {
     process.env.MR_CONFIGS_FILES = configs.js;
 
-    var conf = subject(null, true);
-    conf = removeUnwantedProps(conf);
+    subject.reload();
+
+    var conf = removeUnwantedProps(subject);
 
     assert.deepEqual(conf, parsed.js);
   });
 
   it('with type YAML', function() {
     process.env.MR_CONFIGS_FILES = configs.yaml;
+    subject.reload();
 
-    var conf = subject(null, true);
-    conf = removeUnwantedProps(conf);
+    var conf = removeUnwantedProps(subject);
 
     assert.deepEqual(conf, parsed.yaml);
   });
 
   it('with type XML', function() {
     process.env.MR_CONFIGS_FILES = configs.xml;
+    subject.reload();
 
-    var conf = subject(null, true);
-    conf = removeUnwantedProps(conf);
+    var conf = removeUnwantedProps(subject);
 
     assert.deepEqual(conf, parsed.xml);
   });
 
   it('with type properties', function() {
     process.env.MR_CONFIGS_FILES = configs.properties;
+    subject.reload();
 
-    var conf = subject(null, true);
-    conf = removeUnwantedProps(conf);
+    var conf = removeUnwantedProps(subject);
 
     assert.deepEqual(conf, parsed.properties);
   });
 
   it('with custom parser', function() {
     process.env.MR_CONFIGS_FILES = configs.json;
-
-    var conf = subject({ parser: function(filename) {
+    subject.reload(function(filename) {
       return { parsed: filename };
-    }}, true);
-    conf = removeUnwantedProps(conf);
+    });
+
+    var conf = removeUnwantedProps(subject);
 
     assert.equal(conf.parsed, process.env.MR_CONFIGS_FILES);
   });
 });
 
 describe('Load config', function() {
-  var config  = null;
 
   before(function() {
     process.env.MR_CONFIGS_FILES = configs.json + ', ' + configs.json2;
-    subject.reset();
-    config = subject(null, true);
+    subject.reload();
   });
 
   it('Using multiple configs', function() {
-    assert(config.property);
-    assert(config.numberTwo);
+    assert(subject.property);
+    assert(subject.numberTwo);
   });
 
   it('using cached copy', function() {
-    var configCached = subject(null, true);
-    assert.equal(config.$timestamp, configCached.$timestamp);
+    var configCached = subject;
+    assert.equal(subject.$timestamp, configCached.$timestamp);
   });
 
   it('making sure cached copy isn\'t actually global', function() {
     var configCached = GLOBAL.config;
-    assert.notDeepEqual(config, configCached);
+    assert.notDeepEqual(subject, configCached);
   });
 });
 
@@ -102,40 +98,37 @@ describe('Update cached config', function() {
 
   before(function() {
     process.env.MR_CONFIGS_FILES = configs.json;
-    subject.reset();
+    subject.reload();
 
-    orig = subject(null, true);
+    orig = _.clone(subject);
     configClone = _.clone(orig);
   });
 
   beforeEach(function() {
-    subject.reset();
+    subject.reload();
   });
 
   it('when file changes', function(done) {
-    config = subject(null, true);
-    config.watch();
+    subject.watch();
 
     configClone.property = 'test';
 
     var watcher = fs.watch(process.env.MR_CONFIGS_FILES, function() {
       watcher.close();
 
-      assert.equal(config.property, 'test');
+      assert.equal(subject.property, 'test');
       done();
     });
     writeFile(process.env.MR_CONFIGS_FILES, configClone);
   });
 
   it('using reload():', function() {
-    config = subject(null, true);
-
     configClone.property = 'test2!';
     writeFile(process.env.MR_CONFIGS_FILES, configClone);
 
-    config.reload();
+    subject.reload();
 
-    assert.equal(config.property, 'test2!');
+    assert.equal(subject.property, 'test2!');
   });
 
   after(function() {
@@ -147,8 +140,7 @@ describe('When missing env var', function() {
   var jsonPath = path.join(__dirname, 'fixtures');
 
 
-  beforeEach(function() {
-    subject.reset();
+  before(function() {
     process.env.MR_CONFIGS_FILES = '';
   });
 
@@ -160,9 +152,8 @@ describe('When missing env var', function() {
       }
       else {
         process.chdir(jsonPath);
-
-        var config = require('..')();
-        assert.deepEqual(removeUnwantedProps(config), parsed.json);
+        subject.reload();
+        assert.deepEqual(removeUnwantedProps(subject), parsed.json);
       }
       done();
     });
@@ -180,8 +171,8 @@ describe('When missing env var', function() {
 function removeUnwantedProps(config) {
   return _.omit(config, [
     '$timestamp',
-    '$metaData',
     '$configs',
+    '$watchers',
     'reload',
     'watch',
     'unwatch'

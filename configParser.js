@@ -7,9 +7,7 @@ var yaml = require('js-yaml');
 var xml = require('xml2json');
 var properties = require('properties-parser');
 
-exports.parser = null;
-
-exports.parseFile = function(filePath) {
+exports.parseFile = function(filePath, customParser) {
   var doc = null;
   var stat = fs.statSync(filePath);
 
@@ -17,8 +15,8 @@ exports.parseFile = function(filePath) {
 
     var fileType = path.extname(filePath).substr(1).toLowerCase();
 
-    if (exports.parser) {
-      doc = exports.parser(filePath);
+    if (customParser) {
+      doc = customParser(filePath);
     }
     else if (fileType == 'json') {
       doc = json.readFileSync(filePath);

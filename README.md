@@ -12,7 +12,7 @@ var config = require('mr-config');
 ```bash
 # config files are merged together. The right-most files
 # will override existing duplicate properties.
-MR_CONFIGS_FILES="app-config.json, db-config.json" node app.js
+MR_CONFIGS_FILES="/home/user/app-config.json, /home/user/db-config.json" node app.js
 ```
 
 ## Installation

@@ -1,42 +1,70 @@
-*The name "r6" is simply a numeronym of "require". In this case, 'r' followed by 6 letters.*
+Merges configurations from multiple files, as specified in the MR_CONFIGS_FILES environment variable. Allowing for easy loading of environmental configurations.
 
-###### How to install
-    npm install r6
+```js
+// apps.js
+var config = require('mr-config');
 
-###### How to use
-    var r6 = require('r6')({ options });
+// service.js
+// Uses a cached copy of the configuration
+var config = require('mr-config');
+```
 
-###### Options
-- **contextPath**: The root directory to search from. If not specified, r6 will use the directory of your main js file (entry point).
-- **useGlobal**: Assigns the r6 function to the global scope as "r6" and returns *undefined*. This prevents you from having to re-require r6 in all js files.
-- **legacy**: Utilizes local module search, and allows for the omitting of a leading forward-slash '/' for local modules. *This is to retain backwards-compatibility, but it's use is **not recommended***.
+```bash
+# config files are merged together. The right-most files
+# will override existing duplicate properties.
+MR_CONFIGS_FILES="app-config.json, db-config.json" node app.js
+```
 
-###### *Examples*
-    // Instead of...
-    var fu = require('../../../../fight/kung');
+## Installation
+```bash
+npm install mr-config
+```
 
+## API
+##### config.$configs | *Array*
+The values retrieved from MR_CONFIGS_FILES
+```js
+var confFiles = config.$configs
+// [ 'app-config.json', 'db-config.json' ]
+```
+___
+##### config.$timestamp | *Number*
+The milliseconds since the epoch
+```js
+var lastLoadTime = config.$timestamp
+// 1443498715071
+```
+___
+##### config.reload( [parser] )
+Forces of reload of all config files into memory.
+```js
+config.reload();
+// Reloads config in place
+```
+If a custom parser is needed, reload() can be invoked with a function.
+```js
+config.reload(function(filePath) {
+  /*
+   * Do Stuff
+   */
+  return object;
+});
+```
+___
+##### config.watch()
+Creates a file system watcher for each configuration file
+```js
+config.watch()
+// Will reload config in memory if any of the files change
+```
+___
+##### config.unwatch()
+Closes and config file watchers
+```js
+config.unwatch()
+// Undoes the watch
+```
 
-    // Loads module using the main js file's directory as the context
-    var r6 = require('r6')();
-    var fu = r6('/fight/kung');
-
-
-    // Use with installed modules if you want
-    // (In this case, the "optimize" option is suggested)
-    var r6 = require('r6')({ contextPath: __dirname });
-    var fu = r6('/fight/kung');
-    var path = r6('path');
-
-
-    // Use as a global
-    // File #1
-    require('r6')({ contextPath: __dirname, useGlobal: true });
-    var fu = r6('/fight/kung');
-
-    // File #2
-    var booty = r6('/pirate/booty')
-
-###### Change Log
-**2.0.0**
-- Removed optimize option and made leading slashes mandatory
-- Added legacy option for backwards-compatibility
+## Change Log
+##### 1.0.0
+* First release

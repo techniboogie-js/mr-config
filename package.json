@@ -1,7 +1,7 @@
 {
   "name": "mr-config",
   "version": "1.0.0",
-  "description": "Environmental config",
+  "description": "Merges configurations from multiple files, as specified in the MR_CONFIGS_FILES environment variable. Allowing for easy loading of environmental configurations.",
   "main": "index.js",
   "scripts": {
     "test": "mocha test/mr-config.spec.js"
@@ -20,7 +20,7 @@
   "bugs": {
     "url": "https://github.com/techniboogie/mr-config/issues"
   },
-  "homepage": "https://github.com/techniboogie/mr-config#readme",
+  "homepage": "https://github.com/techniboogie/mr-config",
   "dependencies": {
     "lodash": "3.10.1",
     "jsonfile": "2.2.1",

@@ -1,15 +1,3 @@
-
-/* TODO
-
- doc
- optoins: watch, parser
- reload(), reset()
- hidden props: $config $timestamp
-
- js files are expected to be node modules
-*/
-
-
 var fs = require('fs');
 var path = require('path');
 

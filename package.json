@@ -1,6 +1,6 @@
 {
   "name": "mr-config",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Merges configurations from multiple files, as specified in the MR_CONFIGS_FILES environment variable. Allowing for easy loading of environmental configurations.",
   "main": "index.js",
   "scripts": {
